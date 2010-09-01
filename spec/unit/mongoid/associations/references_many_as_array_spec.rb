@@ -102,6 +102,11 @@ describe Mongoid::Associations::ReferencesManyAsArray do
               preference.person_ids.should include(person.id)
             end
           end
+
+          it "saves the parent" do
+            person.expects(:save)
+            person.preferences << Preference.new(:name => "Utter darkness")
+          end
         end
       end
 
@@ -282,11 +287,21 @@ describe Mongoid::Associations::ReferencesManyAsArray do
         context "when a target is not provided" do
 
           before do
-            person.preference_ids = ["1", "2", "3"]
+            person.preference_ids = [
+              "4c52c439931a90ab29000003",
+              "4c52c439931a90ab29000004",
+              "4c52c439931a90ab29000005"
+            ]
             @association = Mongoid::Associations::ReferencesManyAsArray.new(
               person, options
             )
-            @criteria = Preference.any_in(:_id => ["1", "2", "3"])
+            @criteria = Preference.any_in(
+              :_id => [
+                BSON::ObjectID("4c52c439931a90ab29000003"),
+                BSON::ObjectID("4c52c439931a90ab29000004"),
+                BSON::ObjectID("4c52c439931a90ab29000005")
+              ]
+            )
           end
 
           it "sets the association options" do
@@ -346,11 +361,21 @@ describe Mongoid::Associations::ReferencesManyAsArray do
         context "when a target is not provided" do
 
           before do
-            person.preference_ids = ["1", "2", "3"]
+            person.preference_ids = [
+              "4c52c439931a90ab29000003",
+              "4c52c439931a90ab29000004",
+              "4c52c439931a90ab29000005"
+            ]
             @association = Mongoid::Associations::ReferencesManyAsArray.instantiate(
               person, options
             )
-            @criteria = Preference.any_in(:_id => ["1", "2", "3"])
+            @criteria = Preference.any_in(
+              :_id => [
+                BSON::ObjectID("4c52c439931a90ab29000003"),
+                BSON::ObjectID("4c52c439931a90ab29000004"),
+                BSON::ObjectID("4c52c439931a90ab29000005")
+              ]
+            )
           end
 
           it "sets the association options" do
@@ -388,14 +413,24 @@ describe Mongoid::Associations::ReferencesManyAsArray do
         context "when target is a criteria" do
 
           before do
-            person.preference_ids = ["1", "2", "3"]
+            person.preference_ids = [
+              "4c52c439931a90ab29000003",
+              "4c52c439931a90ab29000004",
+              "4c52c439931a90ab29000005"
+            ]
             @association = Mongoid::Associations::ReferencesManyAsArray.instantiate(
               person, options
             )
           end
 
           it "executes the criteria and sends to the result" do
-            Preference.expects(:any_in).with(:_id => ["1", "2", "3"]).returns([])
+            Preference.expects(:any_in).with(
+              :_id => [
+                BSON::ObjectID("4c52c439931a90ab29000003"),
+                BSON::ObjectID("4c52c439931a90ab29000004"),
+                BSON::ObjectID("4c52c439931a90ab29000005")
+              ]
+            ).returns([])
             @association.entries.should == []
           end
         end
@@ -452,5 +487,5 @@ describe Mongoid::Associations::ReferencesManyAsArray do
         end
       end
     end
-    end
+  end
 end

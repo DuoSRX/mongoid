@@ -34,9 +34,9 @@ module Mongoid #:nodoc:
       @document.id = generate_id if @document.id.blank?
     end
 
-    # Set the _type field on the @document.ment.
+    # Set the _type field on the @document.
     def type!
-      @document._type = @document.class.name if @document.hereditary?
+      @document._type = @document.class.name if @document.hereditary? || @document.class.descendants.any?
     end
 
     # Generates the composite key for a @document.ment.

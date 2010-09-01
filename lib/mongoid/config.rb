@@ -162,10 +162,25 @@ module Mongoid #:nodoc
     #
     # <tt>Mongoid::Config.instance.from_hash({})</tt>
     def from_hash(settings)
-      _master(settings)
-      _slaves(settings)
       settings.except("database", "slaves").each_pair do |name, value|
         send("#{name}=", value) if respond_to?("#{name}=")
+      end
+      _master(settings)
+      _slaves(settings)
+    end
+
+    # Adds a new I18n locale file to the load path
+    #
+    # Example:
+    #
+    # Add portuguese locale
+    # <tt>Mongoid::config.add_language('pt')</tt>
+    #
+    # Adds all available languages
+    # <tt>Mongoid::Config.add_language('*')</tt>
+    def add_language(language_code = nil)
+      Dir[File.join(File.dirname(__FILE__), "..", "config", "locales", "#{language_code}.yml")].each do |file|
+        I18n.load_path << File.expand_path(file)
       end
     end
 
@@ -177,7 +192,7 @@ module Mongoid #:nodoc
     # <tt>Mongoid.reconnect!</tt>
     def reconnect!(now = true)
       if now
-        master.connection.connect_to_master
+        master.connection.connect
       else
         # We set a @reconnect flag so that #master knows to reconnect the next
         # time the connection is accessed.

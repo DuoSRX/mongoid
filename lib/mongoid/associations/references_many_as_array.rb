@@ -34,6 +34,7 @@ module Mongoid #:nodoc:
           @target << object
           object.save unless @parent.new_record?
         end
+        @parent.save unless @parent.new_record?
       end
 
       alias :concat :<<
@@ -48,6 +49,34 @@ module Mongoid #:nodoc:
         load_target
         document = @klass.instantiate(attributes || {})
         push(document); document
+      end
+
+      # Destroy all the associated objects.
+      #
+      # Example:
+      #
+      # <tt>person.posts.destroy_all</tt>
+      #
+      # Returns:
+      #
+      # The number of objects destroyed.
+      def destroy_all(conditions = {})
+        removed = query.call.destroy_all(:conditions => conditions)
+        reset; removed
+      end
+
+      # Delete all the associated objects.
+      #
+      # Example:
+      #
+      # <tt>person.posts.delete_all</tt>
+      #
+      # Returns:
+      #
+      # The number of objects deleted.
+      def delete_all(conditions = {})
+        removed = query.call.delete_all(:conditions => conditions)
+        reset; removed
       end
 
       protected

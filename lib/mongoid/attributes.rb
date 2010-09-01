@@ -29,6 +29,11 @@ module Mongoid #:nodoc:
       end
     end
 
+    # Override respond_to? so it responds properly for dynamic attributes
+    def respond_to?(*args)
+      (Mongoid.allow_dynamic_fields && @attributes && @attributes.has_key?(args.first.to_s)) || super
+    end
+
     # Process the provided attributes casting them to their proper values if a
     # field exists for them on the +Document+. This will be limited to only the
     # attributes provided in the suppied +Hash+ so that no extra nil values get
@@ -68,6 +73,7 @@ module Mongoid #:nodoc:
       typed_value = fields.has_key?(access) ? fields[access].get(value) : value
       accessed(access, typed_value)
     end
+    alias :[] :read_attribute
 
     # Remove a value from the +Document+ attributes. If the value does not exist
     # it will fail gracefully.
@@ -123,10 +129,10 @@ module Mongoid #:nodoc:
     # there is any.
     def write_attribute(name, value)
       access = name.to_s
-      typed_value = fields.has_key?(access) ? fields[access].set(value) : value
-      modify(access, @attributes[access], typed_value)
+      modify(access, @attributes[access], typed_value_for(access, value))
       notify if !id.blank? && new_record?
     end
+    alias :[]= :write_attribute
 
     # Writes the supplied attributes +Hash+ to the +Document+. This will only
     # overwrite existing attributes if they are present in the new +Hash+, all
@@ -152,11 +158,17 @@ module Mongoid #:nodoc:
     alias :attributes= :write_attributes
 
     protected
+
+    # Return the typecast value for a field.
+    def typed_value_for(key, value)
+      fields.has_key?(key) ? fields[key].set(value) : value
+    end
+
     # apply default values to attributes - calling procs as required
     def default_attributes
       default_values = defaults
       default_values.each_pair do |key, val|
-        default_values[key] = val.call if val.respond_to?(:call)
+        default_values[key] = typed_value_for(key, val.call) if val.respond_to?(:call)
       end
       default_values || {}
     end

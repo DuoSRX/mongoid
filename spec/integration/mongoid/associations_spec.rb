@@ -8,6 +8,28 @@ describe Mongoid::Associations do
     end
   end
 
+  context "when setting an array of object ids" do
+
+    let(:person) do
+      Person.new
+    end
+
+    context "when the values are strings" do
+
+      let(:object_id) do
+        BSON::ObjectID.new
+      end
+
+      before do
+        person.attributes = { "preference_ids" => [ object_id.to_s ] }
+      end
+
+      it "casts back to object ids" do
+        person.preference_ids.should == [ object_id ]
+      end
+    end
+  end
+
   context "when destroying dependent documents" do
 
     before do
@@ -766,6 +788,49 @@ describe Mongoid::Associations do
     context "with a saved parent" do
       let(:person) { Person.create!(:ssn => "992-33-1010") }
 
+      describe "#destroy_all" do
+        let!(:preference) { person.preferences.create(:name => "Bleak wastelands") }
+
+        context "without conditions" do
+          it "clears the association" do
+            person.preferences.destroy_all
+            person.preferences.should be_empty
+          end
+
+          it "returns the count of deleted records" do
+            person.preferences.destroy_all.should == 1
+          end
+        end
+
+        context "with conditions" do
+          it "deletes the approriate records" do
+            person.preferences.destroy_all(:name => "Sunshine and puppies")
+            person.preferences.should == [preference]
+          end
+        end
+      end
+
+      describe "#delete_all" do
+        let!(:preference) { person.preferences.create(:name => "Death and despair") }
+
+        context "without conditions" do
+          it "clears the association" do
+            person.preferences.delete_all
+            person.preferences.should be_empty
+          end
+
+          it "returns the count of deleted records" do
+            person.preferences.delete_all.should == 1
+          end
+        end
+
+        context "with conditions" do
+          it "deletes the approriate records" do
+            person.preferences.delete_all(:name => "Rainbows and unicorns")
+            person.preferences.should == [preference]
+          end
+        end
+      end
       context "appending a new document" do
 
         context "with a references_many association" do
